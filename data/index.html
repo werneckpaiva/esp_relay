@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+    <script src="/jquery.min.js"></script>
+    <title>MySwitch</title>
+    <style>
+      html,body{
+        height:100%;
+        padding:0;
+        margin:0;
+        font-family: Arial;
+      }
+      #main-container{
+          width:100%;
+          height:100%;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+      }
+
+      #content{
+        width: 40%;
+        min-width: 200px;
+        border-radius: 25px;
+        border: 4px solid #aaa;
+        padding: 40px;
+        font-size: 2em;
+        display: block;
+        text-align: center;
+      }
+
+      @media only screen and (max-width: 1024px) {
+        #content{
+          width: 80%;
+        }
+      }
+
+      #content h1{
+        margin: 0px;
+      }
+
+      #content.switchOn{
+        border: 4px solid #41B03F;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 120px;
+        height: 68px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 52px;
+        width: 52px;
+        left: 8px;
+        bottom: 8px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+      }
+
+      input:checked + .slider {
+        background-color: #41B03F;
+      }
+
+      input:focus + .slider {
+        box-shadow: 0 0 1px #41B03F;
+      }
+
+      input:checked + .slider:before {
+        -webkit-transform: translateX(52px);
+        -ms-transform: translateX(52px);
+        transform: translateX(52px);
+      }
+
+      /* Rounded sliders */
+      .slider.round {
+        border-radius: 68px;
+      }
+
+      .slider.round:before {
+        border-radius: 50%;
+      }
+
+      .myswitch{
+        margin:20px;
+      }
+
+    </style>
+    <script type="text/javascript">
+    var isSwitchOn = false;
+
+    function updateSwitchStatus(data){
+      isSwitchOn = data.switchOn
+      $("#content").toggleClass("switchOn", isSwitchOn);
+      $("#btnSwitchOnOff").prop('checked', isSwitchOn);
+    }
+
+    function fetchStatus(){
+      $.getJSON("status", updateSwitchStatus);
+    }
+
+    $(function(){
+      $("#content").click(function(){
+        if (isSwitchOn){
+          $.getJSON("switchOff", updateSwitchStatus);
+        } else {
+          $.getJSON("switchOn", updateSwitchStatus);
+        }
+      })
+
+      setInterval(function() {
+        fetchStatus();
+      }, 2000);
+
+      $("#content-output").html($(window).width() + "x" + $(window).height());
+    })
+    </script>
+
+  </head>
+  <body>
+    <div id="main-container">
+      <div id="content">
+          <h1>My Switch</h1>
+          <div class="myswitch"><span id="switchStatus"></span></div>
+          <div>
+            <label class="switch">
+              <input id="btnSwitchOnOff" type="checkbox">
+              <span class="slider round"></span>
+            </label>
+          </div>
+      </div>
+    </div>
+</body>
+</html>
