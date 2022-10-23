@@ -14,6 +14,11 @@
 byte SWITCH_ON[] = {0xA0, 0x01, 0x01, 0xA2};
 byte SWITCH_OFF[] = {0xA0, 0x01, 0x00, 0xA1};
 
+WiFiUDP ntpUDP;
+const long utcOffsetInSeconds = 0;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+
+
 bool isSwitchOn = false;
 void turnSwitchOn(){
   isSwitchOn = true;
@@ -27,9 +32,18 @@ void turnSwitchOff(){
   Serial.println("Switch off");
 }
 
+void toggleOnOff(){
+  if (isSwitchOn) {
+    turnSwitchOff();
+  } else {
+    turnSwitchOn();
+  }
+}
+
 void sendSwitchStatus(AsyncWebServerRequest *request){
-  char jsonMsg[100];
-  sprintf(jsonMsg, "{\"switchOn\": %s}\n", (isSwitchOn? "true":"false"));
+  char jsonMsg[200];
+  String curTime = timeClient.getFormattedTime();
+  sprintf(jsonMsg, "{\"switchOn\": %s, \"time\":\"%s\"}\n", (isSwitchOn? "true":"false"), curTime.c_str());
   Serial.println(jsonMsg);
   AsyncWebServerResponse *response = request->beginResponse(200, "application/json", jsonMsg);
   response->addHeader("Access-Control-Allow-Origin","*");
@@ -58,6 +72,11 @@ void setupWebServerWithAlexa(){
 
   server.on("/switchOff", HTTP_GET, [](AsyncWebServerRequest *request){
     turnSwitchOff();
+    sendSwitchStatus(request);
+  });
+
+  server.on("/toggle", HTTP_GET, [](AsyncWebServerRequest *request){
+    toggleOnOff();
     sendSwitchStatus(request);
   });
 
@@ -115,10 +134,6 @@ void connectToWifi(){
   Serial.println(WiFi.localIP());
 }
 
-WiFiUDP ntpUDP;
-const long utcOffsetInSeconds = 0;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
-
 void setup() {
   Serial.begin(9600);
 
@@ -127,6 +142,7 @@ void setup() {
   connectToWifi();
 
   timeClient.begin();
+  timeClient.setUpdateInterval(3600000); // Update time every hour
   timeClient.update();
 
   SPIFFS.begin();
@@ -149,5 +165,6 @@ void loop() {
   }
   MDNS.update();
   espalexa.loop();
+  timeClient.update();
   delay(1);
 }
